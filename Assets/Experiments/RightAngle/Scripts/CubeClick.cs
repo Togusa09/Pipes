@@ -94,58 +94,60 @@ namespace Experiments.RightAngle
             Mesh mesh = new Mesh();
             var size = 0.25f / 2.0f;
 
-            Quaternion q45;
-            Quaternion q90;
-            Quaternion q0;
 
-            if (gridPoint.x < StartingCube.transform.position.x)
+            int rotationDir = 0;
+            int startingAngle = 0;
+
+            var diff = gridPoint - StartingCube.transform.position;
+            var angle =  Vector3.SignedAngle(diff, Vector3.forward, Vector3.up);
+            Debug.Log(angle);
+
+            // TODO -> Figure out rotation needed for angle, then int div 90
+            if (angle < -90)
             {
-                q90 = Quaternion.Euler(0, 270, 0);
+                startingAngle = 180;
+            }
+            else if (angle < 0)
+            {
+                startingAngle = 0;
+            } 
+            else if (angle < 90)
+            {
+                startingAngle = 0;
             }
             else
             {
-                q90 = Quaternion.Euler(0, 90, 0);
+                startingAngle = 180;
             }
 
+            // Todo - figure out a better way to get off vector...
+
+            // var signedAngle = Vector3.SignedAngle(gridPoint, StartingCube.transform.position, Vector3.up);
+            //rotationDir = (int)(signedAngle / Mathf.Abs(signedAngle));
             if (gridPoint.z < StartingCube.transform.position.z)
             {
-                q0 = Quaternion.Euler(0, 180, 0);
-
-                if (gridPoint.x < StartingCube.transform.position.x)
-                {
-                    q45 = Quaternion.Euler(0, 225, 0);
-                }
-                else
-                {
-                    q45 = Quaternion.Euler(0, 135, 0);
-                }
+                rotationDir = gridPoint.x < StartingCube.transform.position.x ? 1 : -1;
             }
             else
             {
-                q0 = Quaternion.Euler(0, 0, 0);
-
-                if (gridPoint.x < StartingCube.transform.position.x)
-                {
-                    q45 = Quaternion.Euler(0, -45, 0);
-                }
-                else
-                {
-                    q45 = Quaternion.Euler(0, 45, 0);
-                }
+                rotationDir = gridPoint.x < StartingCube.transform.position.x ? -1 : 1;
             }
 
-            var xDist = gridPoint.x - StartingCube.transform.position.x;
-            var zDist = gridPoint.z - StartingCube.transform.position.z;
+            var startingRotation = Quaternion.Euler(0, startingAngle, 0);
+            var incrementRotation = Quaternion.Euler(0, 45 * rotationDir, 0);
+            var jointRotation = startingRotation * incrementRotation;
+            var endingRotation = jointRotation * incrementRotation;
+
             var length = Vector3.Distance(StartingCube.transform.position, gridPoint);
             var orientation = Quaternion.LookRotation(gridPoint - StartingCube.transform.position);
 
             var pipeVertices = new List<Vector3>();
             // Pipe start
-            pipeVertices.AddRange(GetPipeOuter(size).Select(x => q0 * x));
+            pipeVertices.AddRange(GetPipeOuter(size).Select(x => startingRotation * x));
             // Joint
-            pipeVertices.AddRange(GetPipeOuter(size).Select(x => (q45 * x * 1.55f) + new Vector3(0, 0, zDist)));
+            pipeVertices.AddRange(GetPipeOuter(size).Select(x => (startingRotation * incrementRotation * x * 1.5f) + new Vector3(0, 0, diff.z))); // Need to increase width as looks narrower at 45 deg
             // Pipe end
-            pipeVertices.AddRange(GetPipeOuter(size).Select(x => (q90 * x) + new Vector3(xDist, 0, zDist)));
+            pipeVertices.AddRange(GetPipeOuter(size).Select(x => (startingRotation * incrementRotation * incrementRotation * x) + new Vector3(diff.x, 0, diff.z)));
 
             mesh.vertices = pipeVertices.ToArray();
 
