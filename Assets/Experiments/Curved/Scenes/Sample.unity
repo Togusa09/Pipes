@@ -239,7 +239,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 275889906}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4db525a759475634d870332f7a698793, type: 3}
+  m_Script: {fileID: 11500000, guid: 2428c423d6c76a6448881d70e5695559, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   StartingCubePrefab: {fileID: 27006901955468351, guid: e7dce9cc3708c3c4e9bf8e6ce327f443,
