@@ -111,34 +111,19 @@ namespace Experiments.Curved
             var endingRotation = startingRotation * Quaternion.Euler(0, 90 * rotationDir, 0);
             
             var pipeVertices = new List<Vector3>();
-            // Pipe start
-            //pipeVertices.AddRange(GetPipeOuter(size).Select(x => startingRotation * x));
-
             var tris = new List<int>();
 
-            var arcOrigin = new Vector3(StartingCube.transform.position.x, 0, gridPoint.z);
-            //var startLength = (gridPoint - arcOrigin).magnitude;
-            //var endLength = (StartingCube.transform.position - arcOrigin).magnitude;
-
-            //var startPosition = new Vector3(0, 0, 0);
-            var endPosition = diff;
 
             var pipeSections = 6;
             for(var i = 0; i <= pipeSections; i++)
             {
                 var frac = (1.0f / pipeSections) * i;
-
-                var jointRotation = Quaternion.Slerp(startingRotation, endingRotation, frac);
-                //var jointPosition = Vector3.Slerp(Vector3.zero, diff, frac);
-                //var jointAngle = Mathf.Lerp(0, 90, frac);
-                //var radius = Mathf.Lerp(startLength, endLength, frac);
-
                 var vec1 = Vector3.Project(diff, Vector3.left) * -1;
                 var vec2 = Vector3.Project(diff, Vector3.forward);
+
+                var jointRotation = Quaternion.Slerp(startingRotation, endingRotation, frac);
                 var jointPosition = Vector3.Slerp(vec1, vec2, frac) + new Vector3(diff.x, 0, 0);
 
-                //float xPos = Mathf.Sin(Mathf.Deg2Rad * jointAngle) * radius;
-                //float zPos = Mathf.Cos(Mathf.Deg2Rad * jointAngle) * radius;
 
                 pipeVertices.AddRange(GetPipeOuter(size).Select(x =>  (jointRotation * x) + jointPosition)); // Need to increase width as looks narrower at 45 deg
                 if (i < pipeSections)
@@ -147,21 +132,8 @@ namespace Experiments.Curved
                 }
             }
 
-            // Joint
-            
-            
-            // Pipe end
-            //pipeVertices.AddRange(GetPipeOuter(size).Select(x => (endingRotation * x) + new Vector3(diff.x, 0, diff.z)));
 
             mesh.vertices = pipeVertices.ToArray();
-
-            
-
-            // This can just be bound after the vertices are created as the relationship is fixed, unrelated to number of segments
-            // First pipe section
-            //tris.AddRange(GetPipeOuterIndices(0));
-            // Second pipe section
-            //tris.AddRange(GetPipeOuterIndices(1));
 
             mesh.triangles = tris.ToArray();
             mesh.RecalculateNormals();
