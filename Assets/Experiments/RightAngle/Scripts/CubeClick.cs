@@ -74,7 +74,6 @@ namespace Experiments.RightAngle
                     meshFilter.mesh = mesh;
                     dynamicMesh.transform.SetParent(StartingCube.transform);
                     dynamicMesh.transform.localPosition = Vector3.zero;
-                    //dynamicMesh.transform.rotation = orientation;
                     dynamicMesh.transform.rotation = Quaternion.identity;
 
 
@@ -94,24 +93,12 @@ namespace Experiments.RightAngle
             Mesh mesh = new Mesh();
             var size = 0.25f / 2.0f;
 
-
-            int rotationDir = 0;
             int startingAngle = 0;
 
             var diff = gridPoint - StartingCube.transform.position;
-            var angle =  Vector3.SignedAngle(diff, Vector3.forward, Vector3.up);
-            Debug.Log(angle);
 
-            // TODO -> Figure out rotation needed for angle, then int div 90
-            if (angle < -90)
-            {
-                startingAngle = 180;
-            }
-            else if (angle < 0)
-            {
-                startingAngle = 0;
-            } 
-            else if (angle < 90)
+            // A pure math way for this would be nice, but not sure if is...
+            if (diff.z > 0)
             {
                 startingAngle = 0;
             }
@@ -120,38 +107,26 @@ namespace Experiments.RightAngle
                 startingAngle = 180;
             }
 
-            // Todo - figure out a better way to get off vector...
-
-            // var signedAngle = Vector3.SignedAngle(gridPoint, StartingCube.transform.position, Vector3.up);
-            //rotationDir = (int)(signedAngle / Mathf.Abs(signedAngle));
-            if (gridPoint.z < StartingCube.transform.position.z)
-            {
-                rotationDir = gridPoint.x < StartingCube.transform.position.x ? 1 : -1;
-            }
-            else
-            {
-                rotationDir = gridPoint.x < StartingCube.transform.position.x ? -1 : 1;
-            }
+            var rotationDir = Mathf.Clamp(diff.z, -1, 1) * Mathf.Clamp(diff.x, -1, 1);
 
             var startingRotation = Quaternion.Euler(0, startingAngle, 0);
-            var incrementRotation = Quaternion.Euler(0, 45 * rotationDir, 0);
-            var jointRotation = startingRotation * incrementRotation;
-            var endingRotation = jointRotation * incrementRotation;
-
-            var length = Vector3.Distance(StartingCube.transform.position, gridPoint);
-            var orientation = Quaternion.LookRotation(gridPoint - StartingCube.transform.position);
-
+            var endingRotation = startingRotation * Quaternion.Euler(0, 90 * rotationDir, 0);
+            
             var pipeVertices = new List<Vector3>();
             // Pipe start
             pipeVertices.AddRange(GetPipeOuter(size).Select(x => startingRotation * x));
             // Joint
-            pipeVertices.AddRange(GetPipeOuter(size).Select(x => (startingRotation * incrementRotation * x * 1.5f) + new Vector3(0, 0, diff.z))); // Need to increase width as looks narrower at 45 deg
+            var jointRotation = Quaternion.Slerp(startingRotation, endingRotation, 0.5f);
+            pipeVertices.AddRange(GetPipeOuter(size).Select(x => (jointRotation * x * 1.5f) + new Vector3(0, 0, diff.z))); // Need to increase width as looks narrower at 45 deg
+            
             // Pipe end
-            pipeVertices.AddRange(GetPipeOuter(size).Select(x => (startingRotation * incrementRotation * incrementRotation * x) + new Vector3(diff.x, 0, diff.z)));
+            pipeVertices.AddRange(GetPipeOuter(size).Select(x => (endingRotation * x) + new Vector3(diff.x, 0, diff.z)));
 
             mesh.vertices = pipeVertices.ToArray();
 
             var tris = new List<int>();
+
+            // This can just be bound after the vertices are created as the relationship is fixed, unrelated to number of segments
             // First pipe section
             tris.AddRange(GetPipeOuterIndices(0));
             // Second pipe section
