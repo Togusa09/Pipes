@@ -4,6 +4,13 @@ using UnityEngine;
 
 namespace Experiments.Curved
 {
+    public enum InterpolationMethod
+    {
+        Lerp,
+        Slerp,
+        Oval,
+    }
+
     public class CubeClick : MonoBehaviour
     {
         public GameObject StartingCubePrefab;
@@ -12,6 +19,7 @@ namespace Experiments.Curved
         public float GridSize = 1f;
 
         private GameObject StartingCube;
+        public InterpolationMethod InterpolationMethod = InterpolationMethod.Slerp;
 
         // Start is called before the first frame update
         void Start()
@@ -114,16 +122,32 @@ namespace Experiments.Curved
             var tris = new List<int>();
 
 
-            var pipeSections = 6;
+            var pipeSections = 4;
             for(var i = 0; i <= pipeSections; i++)
             {
                 var frac = (1.0f / pipeSections) * i;
                 var vec1 = Vector3.Project(diff, Vector3.left) * -1;
                 var vec2 = Vector3.Project(diff, Vector3.forward);
 
-                var jointRotation = Quaternion.Slerp(startingRotation, endingRotation, frac);
-                var jointPosition = Vector3.Slerp(vec1, vec2, frac) + new Vector3(diff.x, 0, 0);
+                Quaternion jointRotation;
+                Vector3 jointPosition;
 
+                jointRotation = Quaternion.Lerp(startingRotation, endingRotation, frac);
+
+                switch (InterpolationMethod)
+                {
+                    case InterpolationMethod.Oval:
+                        var angle = Mathf.LerpAngle(0, 90, frac);
+                        jointPosition = new Vector3(-diff.x * Mathf.Cos(angle / Mathf.Rad2Deg), 0.0f, diff.z * Mathf.Sin(angle / Mathf.Rad2Deg)) + new Vector3(diff.x, 0, 0);
+                        break;
+                    case InterpolationMethod.Lerp:                       
+                        jointPosition = Vector3.Lerp(vec1, vec2, frac) + new Vector3(diff.x, 0, 0);
+                        break;
+                    case InterpolationMethod.Slerp:
+                    default:
+                        jointPosition = Vector3.Slerp(vec1, vec2, frac) + new Vector3(diff.x, 0, 0);
+                        break;
+                }
 
                 pipeVertices.AddRange(GetPipeOuter(size).Select(x =>  (jointRotation * x) + jointPosition)); // Need to increase width as looks narrower at 45 deg
                 if (i < pipeSections)

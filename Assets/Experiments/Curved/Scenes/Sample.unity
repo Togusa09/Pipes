@@ -248,6 +248,7 @@ MonoBehaviour:
     type: 3}
   PipeMeterial: {fileID: 2100000, guid: ff04ef3db7fc7184a845df8bb99f6fc4, type: 2}
   GridSize: 1
+  InterpolationMethod: 2
 --- !u!4 &275889908
 Transform:
   m_ObjectHideFlags: 0
